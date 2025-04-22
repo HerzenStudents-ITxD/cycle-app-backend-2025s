@@ -52,7 +52,7 @@ namespace CycleApp.Models
         [Required]
         public Guid UserId { get; set; }
 
-        public virtual User User { get; set; } 
+        public virtual User? User { get; set; }  // Добавлен nullable
 
         [Required]
         public DateTime Date { get; set; } = DateTime.UtcNow;
@@ -61,21 +61,21 @@ namespace CycleApp.Models
         public bool? PeriodEnded { get; set; }
 
         [StringLength(500)]
-        public string Note { get; set; }
+        public string? Note { get; set; } = null;  // Nullable + значение по умолчанию
 
         [StringLength(20)]
-        public string Heaviness { get; set; }
+        public string? Heaviness { get; set; } = null;
 
         [StringLength(200)]
-        public string Symptoms { get; set; }
+        public string? Symptoms { get; set; } = null;
 
         [StringLength(20)]
-        public string Sex { get; set; }
+        public string? Sex { get; set; } = null;
 
         [StringLength(20)]
-        public string Mood { get; set; }
+        public string? Mood { get; set; } = null;
 
         [StringLength(20)]
-        public string Discharges { get; set; }
+        public string? Discharges { get; set; } = null;
     }
 }

@@ -96,46 +96,33 @@ using CycleApp.Contracts.Auth;
 using CycleApp.DataAccess;
 using CycleApp.Models;
 using CycleApp.Models.Auth;
+using CycleApp.Services;
 using CycleApp.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Hosting;
-using MyRegisterRequest = CycleApp.Contracts.Auth.RegisterRequest;
-using CycleApp.Services;
-using CycleApp.Services.Interfaces;
 
 namespace CycleApp.Controllers
 {
     [ApiController]
     [Route("api/auth")]
-    public class AuthController : ControllerBase
+    public class AuthController(
+        IAuthService authService,
+        ICodeStorageService codeStorage,
+        IEmailService emailService,
+        ITokenService tokenService,
+        CycleDbContext dbContext,
+        ILogger<AuthController> logger,
+        IWebHostEnvironment env) : ControllerBase
     {
-        private readonly IAuthService _authService;
-        private readonly ICodeStorageService _codeStorage;
-        private readonly IEmailService _emailService;
-        private readonly ITokenService _tokenService;
-        private readonly CycleDbContext _dbContext;
-        private readonly ILogger<AuthController> _logger;
-        private readonly IWebHostEnvironment _env;
-
-        public AuthController(
-            IAuthService authService,
-            ICodeStorageService codeStorage,
-            IEmailService emailService,
-            ITokenService tokenService,
-            CycleDbContext dbContext,
-            ILogger<AuthController> logger,
-            IWebHostEnvironment env)
-        {
-            _authService = authService;
-            _codeStorage = codeStorage;
-            _emailService = emailService;
-            _tokenService = tokenService;
-            _dbContext = dbContext;
-            _logger = logger;
-            _env = env;
-        }
+        private readonly IAuthService _authService = authService;
+        private readonly ICodeStorageService _codeStorage = codeStorage;
+        private readonly IEmailService _emailService = emailService;
+        private readonly ITokenService _tokenService = tokenService;
+        private readonly CycleDbContext _dbContext = dbContext;
+        private readonly ILogger<AuthController> _logger = logger;
+        private readonly IWebHostEnvironment _env = env;
 
         [HttpPost("send-code")]
         public async Task<IActionResult> SendCode([FromBody][Required][EmailAddress] string email)
@@ -157,7 +144,7 @@ namespace CycleApp.Controllers
                     return Ok(new
                     {
                         message = "Verification code generated (development mode)",
-                        code = code 
+                        code
                     });
                 }
 
@@ -173,11 +160,11 @@ namespace CycleApp.Controllers
         [HttpPost("verify-code")]
         public IActionResult VerifyCode([FromBody] VerifyCodeRequest request)
         {
-            _logger.LogInformation($"Попытка верификации кода {request.Code} для {request.Email}");
+            _logger.LogInformation("Попытка верификации кода {Code} для {Email}", request.Code, request.Email);
 
             if (!_codeStorage.ValidateCode(request.Email, request.Code))
             {
-                _logger.LogError($"Ошибка верификации кода для {request.Email}");
+                _logger.LogError("Ошибка верификации кода для {Email}", request.Email);
                 return BadRequest(new { message = "Invalid or expired code" });
             }
 
@@ -186,17 +173,17 @@ namespace CycleApp.Controllers
             if (user == null)
             {
                 var tempToken = _tokenService.GenerateTempToken(request.Email);
-                _logger.LogInformation($"Сгенерирован временный токен для {request.Email}");
+                _logger.LogInformation("Сгенерирован временный токен для {Email}", request.Email);
                 return Ok(new AuthResponse(tempToken, true, request.Email));
             }
 
             var token = _tokenService.GenerateToken(user);
-            _logger.LogInformation($"Сгенерирован JWT токен для {user.Email}");
+            _logger.LogInformation("Сгенерирован JWT токен для {Email}", user.Email);
             return Ok(new AuthResponse(token, false, user.Email, user.UserId));
         }
 
         [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] MyRegisterRequest request)
+        public async Task<IActionResult> Register([FromBody] RegisterRequest request)
         {
             if (!_tokenService.ValidateTempToken(request.TempToken, request.Email))
                 return Unauthorized();

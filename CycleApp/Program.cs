@@ -131,18 +131,29 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Конфигурация сервисов
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// База данных
 builder.Services.AddDbContext<CycleDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("Database")));
 
+// Регистрация сервисов
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<ICodeStorageService, CodeStorageService>();
 builder.Services.AddScoped<ICycleCalculatorService, CycleCalculatorService>();
+
+// Аутентификация JWT
+var jwtKey = builder.Configuration["Jwt:Key"] ??
+    throw new InvalidOperationException("JWT Key is not configured");
+var jwtIssuer = builder.Configuration["Jwt:Issuer"] ??
+    throw new InvalidOperationException("JWT Issuer is not configured");
+var jwtAudience = builder.Configuration["Jwt:Audience"] ??
+    throw new InvalidOperationException("JWT Audience is not configured");
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -153,26 +164,28 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateAudience = true,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"],
-            ValidAudience = builder.Configuration["Jwt:Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+            ValidIssuer = jwtIssuer,
+            ValidAudience = jwtAudience,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
         };
     });
 
+// CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowSpecificOrigins", policyBuilder =>
     {
-        var origins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>();
-        if (origins != null && origins.Length > 0)
+        var origins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+        if (origins.Length > 0)
         {
             policyBuilder.WithOrigins(origins)
-                          .AllowAnyHeader()
-                          .AllowAnyMethod();
+                       .AllowAnyHeader()
+                       .AllowAnyMethod();
         }
     });
 });
 
+// Логирование
 builder.Services.AddLogging(config =>
 {
     config.ClearProviders();
@@ -181,6 +194,7 @@ builder.Services.AddLogging(config =>
 
 var app = builder.Build();
 
+// Middleware
 app.UseMiddleware<ErrorHandlingMiddleware>();
 
 if (app.Environment.IsDevelopment())
@@ -195,6 +209,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
+// Инициализация БД
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<CycleDbContext>();
