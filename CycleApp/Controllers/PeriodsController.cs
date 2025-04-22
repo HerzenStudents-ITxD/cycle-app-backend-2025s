@@ -4,38 +4,39 @@ using CycleApp.Contracts;
 using CycleApp.DataAccess;
 using CycleApp.Models;
 
-namespace CycleApp.Controllers;
-
-[ApiController]
-[Route("[controller]")]
-public class PeriodsController : ControllerBase
+namespace CycleApp.Controllers
 {
-    private readonly CycleDbContext _dbContext;
-
-    public PeriodsController(CycleDbContext dbContext)
+    [ApiController]
+    [Route("[controller]")]
+    public class PeriodsController : ControllerBase
     {
-        _dbContext = dbContext;
-    }
+        private readonly CycleDbContext _dbContext;
 
-    [HttpPost]
-    public async Task<IActionResult> Create([FromBody] CreatePeriodRequest request, CancellationToken ct)
-    {
-        var period = new Period(request.user_id, request.StartDate, request.EndDate, request.IsActive);
+        public PeriodsController(CycleDbContext dbContext)
+        {
+            _dbContext = dbContext;
+        }
 
-        await _dbContext.Periods.AddAsync(period, ct);
-        await _dbContext.SaveChangesAsync(ct);
+        [HttpPost]
+        public async Task<IActionResult> Create([FromBody] CreatePeriodRequest request, CancellationToken ct)
+        {
+            var period = new Period(request.UserId, request.StartDate, request.EndDate, request.IsActive, request.DayBeforePeriod);
 
-        return Ok();
-    }
+            await _dbContext.Periods.AddAsync(period, ct);
+            await _dbContext.SaveChangesAsync(ct);
 
-    [HttpGet]
-    public async Task<IActionResult> GetByUser(Guid user_id, CancellationToken ct)
-    {
-        var periods = await _dbContext.Periods
-            .Where(p => p.user_id == user_id)
-            .Select(p => new PeriodDto(p.period_id, p.user_id, p.StartDate, p.EndDate, p.IsActive))
-            .ToListAsync(ct);
+            return Ok();
+        }
 
-        return Ok(new GetPeriodsResponse(periods));
+        [HttpGet]
+        public async Task<IActionResult> GetByUser(Guid userId, CancellationToken ct)
+        {
+            var periods = await _dbContext.Periods
+                .Where(p => p.UserId == userId)
+                .Select(p => new PeriodDto(p.PeriodId, p.UserId, p.StartDate, p.EndDate, p.IsActive))
+                .ToListAsync(ct);
+
+            return Ok(new GetPeriodsResponse(periods));
+        }
     }
 }

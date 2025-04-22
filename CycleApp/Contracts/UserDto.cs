@@ -5,7 +5,7 @@ public record UserDto(
     string Email,
     int CycleLength,
     DateTime CreateDate,
-    int RemindPeriod,
+    bool RemindPeriod,
     bool RemindOvulation,
     int PeriodLength,
     string Theme
