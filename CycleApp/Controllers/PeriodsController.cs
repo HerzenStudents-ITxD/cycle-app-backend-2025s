@@ -36,7 +36,7 @@ namespace CycleApp.Controllers
                 .Select(p => new PeriodDto(p.PeriodId, p.UserId, p.StartDate, p.EndDate, p.IsActive))
                 .ToListAsync(ct);
 
-            return Ok(new GetPeriodsResponse(periods));
+            return Ok( periods);
         }
         [HttpGet("by-date-range")]
         public async Task<IActionResult> GetPeriodsByDateRange(

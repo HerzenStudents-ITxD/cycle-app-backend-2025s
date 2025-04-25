@@ -211,7 +211,7 @@ namespace CycleApp.Controllers
                         ))
                         .ToListAsync(ct);
 
-                    return Ok(new GetEntriesResponse(entries));
+                    return Ok(entries);
                 }
                 catch (Exception ex)
                 {
