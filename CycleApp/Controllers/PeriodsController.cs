@@ -58,7 +58,7 @@ namespace CycleApp.Controllers
                         ))
                         .ToListAsync(ct);
 
-                    return Ok(new GetPeriodsResponse(periods));
+                    return Ok(periods);
                 }
                 catch (Exception ex)
                 {

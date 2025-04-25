@@ -18,7 +18,34 @@ namespace CycleApp.Controllers
         {
             _dbContext = dbContext;
         }
+        [HttpGet("by-date-range")]
+        public async Task<IActionResult> GetOvulationsByDate(
+        [FromQuery] DateTime start_date,
+        [FromQuery] DateTime end_date,
+        [FromQuery] Guid user_id,
+        CancellationToken ct)
+                {
+                    try
+                    {
+                        var ovulations = await _dbContext.Ovulations
+                            .Where(p => p.UserId == user_id && p.StartDate >= start_date && p.EndDate <= end_date)
+                            .Select(p => new OvulationDto(
+                                p.OvulationId,
+                                p.UserId,
+                                p.StartDate,
+                                p.EndDate,
+                                null,
+                                null
+                            ))
+                            .ToListAsync(ct);
 
+                        return Ok(ovulations);
+                    }
+                    catch (Exception ex)
+                    {
+                        return StatusCode(500, new { error = "Internal server error", details = ex.Message });
+            }
+         }
         // POST: Рассчитать дни овуляции
         [HttpPost("calculate")]
         public async Task<IActionResult> CalculateOvulation([FromBody] CalculateOvulationRequest request, CancellationToken ct)
