@@ -29,6 +29,7 @@ namespace CycleApp.Models
         public bool IsActive { get; set; }
         public int? DayBeforePeriod { get; set; }
         public int DayOfCycle { get; set; }
+        public bool IsPredicted { get; set; } = false;
 
         public User User { get; set; }
 

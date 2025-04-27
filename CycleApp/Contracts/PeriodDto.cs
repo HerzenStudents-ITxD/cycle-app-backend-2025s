@@ -1,9 +1,9 @@
 ﻿namespace CycleApp.Contracts;
 
 public record PeriodDto(
-    Guid period_id,
-    Guid user_id,
+    Guid PeriodId,
+    Guid UserId,
     DateTime StartDate,
-    DateTime? EndDate,
-    bool IsActive
-);
+    DateTime EndDate,
+    bool IsActive,
+    bool IsPredicted);

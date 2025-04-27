@@ -34,8 +34,8 @@ namespace CycleApp.Controllers
                                 p.UserId,
                                 p.StartDate,
                                 p.EndDate,
-                                null,
-                                null
+                                p.IsPredicted,
+                                p.Symptoms
                             ))
                             .ToListAsync(ct);
 
@@ -47,7 +47,7 @@ namespace CycleApp.Controllers
             }
          }
         // POST: Рассчитать дни овуляции
-        [HttpPost("calculate")]
+        [HttpPost("calculate")] 
         public async Task<IActionResult> CalculateOvulation([FromBody] CalculateOvulationRequest request, CancellationToken ct)
         {
             try

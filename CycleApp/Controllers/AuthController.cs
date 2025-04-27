@@ -191,11 +191,23 @@ namespace CycleApp.Controllers
             if (_dbContext.Users.Any(u => u.Email == request.Email))
                 return BadRequest(new { message = "User already exists" });
 
+            var CycleLength = request.CycleLength;
+            if (!(CycleLength > 0))
+            {
+                CycleLength = 28;
+            }
+
+            var PeriodLength = request.PeriodLength;
+            if(!(PeriodLength > 0))
+            {
+                PeriodLength = 5;
+            }
+
             var user = new User
             {
                 Email = request.Email,
-                CycleLength = request.CycleLength,
-                PeriodLength = request.PeriodLength,
+                CycleLength = CycleLength,
+                PeriodLength = PeriodLength,
                 RemindPeriod = true,
                 RemindOvulation = true
             };

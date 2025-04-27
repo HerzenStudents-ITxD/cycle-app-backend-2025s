@@ -13,41 +13,46 @@ namespace CycleApp.Services
     {
         public (DateTime start, DateTime end) CalculateNextOvulation(User user)
         {
-            // Ovulation typically occurs 14 days before the next period
-            var lastPeriod = user.Periods?.OrderByDescending(p => p.StartDate).FirstOrDefault();
+            var lastPeriod = user.Periods?
+                .OrderByDescending(p => p.StartDate)
+                .FirstOrDefault();
+
+            DateTime ovulationStart;
 
             if (lastPeriod == null)
             {
-                // Default calculation if no period data
-                var nextPeriodStart = DateTime.UtcNow.AddDays(user.CycleLength);
-                var ovulationStart = nextPeriodStart.AddDays(-14);
-                return (ovulationStart, ovulationStart.AddDays(5)); // Typically 5-6 days window
-            }
-
-            var cycleDay = CalculateDayOfCycle(user, DateTime.UtcNow);
-            var daysUntilOvulation = lastPeriod.DayOfCycle - 14;
-
-            if (daysUntilOvulation > 0)
-            {
-                var ovulationStart = DateTime.UtcNow.AddDays(daysUntilOvulation);
-                return (ovulationStart, ovulationStart.AddDays(5));
+                ovulationStart = DateTime.UtcNow.AddDays(user.CycleLength - 14);
             }
             else
             {
-                var nextPeriodStart = lastPeriod.StartDate.AddDays(user.CycleLength);
-                var ovulationStart = nextPeriodStart.AddDays(-14);
-                return (ovulationStart, ovulationStart.AddDays(5));
+                ovulationStart = lastPeriod.StartDate.AddDays(user.CycleLength - 14);
             }
+
+            return (ovulationStart, ovulationStart.AddDays(1));
         }
 
+        // ВОССТАНОВЛЕННЫЙ МЕТОД ДЛЯ ПЕРИОДОВ
         public (DateTime start, DateTime end) CalculateNextPeriod(User user)
         {
-            var lastPeriod = user.Periods?.OrderByDescending(p => p.StartDate).FirstOrDefault();
-            var start = lastPeriod == null
-                ? DateTime.UtcNow.AddDays(user.CycleLength)
-                : lastPeriod.StartDate.AddDays(user.CycleLength);
+            var lastPeriod = user.Periods?
+                .OrderByDescending(p => p.StartDate)
+                .FirstOrDefault();
 
-            return (start, start.AddDays(user.PeriodLength));
+            DateTime periodStart;
+
+            if (lastPeriod == null)
+            {
+                periodStart = DateTime.UtcNow.AddDays(user.CycleLength);
+            }
+            else
+            {
+                periodStart = lastPeriod.StartDate.AddDays(user.CycleLength);
+            }
+
+            return (
+                start: periodStart,
+                end: periodStart.AddDays(user.PeriodLength)
+            );
         }
 
         public int CalculateDayOfCycle(User user, DateTime date)
@@ -59,8 +64,7 @@ namespace CycleApp.Services
 
             if (lastPeriod == null) return 1;
 
-            var days = (date - lastPeriod.StartDate).Days;
-            return (days % user.CycleLength) + 1;
+            return (date - lastPeriod.StartDate).Days % user.CycleLength + 1;
         }
     }
 }

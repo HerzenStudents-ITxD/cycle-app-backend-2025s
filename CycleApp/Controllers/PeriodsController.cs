@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using CycleApp.Contracts;
 using CycleApp.DataAccess;
 using CycleApp.Models;
+using System.Linq;
 
 namespace CycleApp.Controllers
 {
@@ -33,7 +34,7 @@ namespace CycleApp.Controllers
         {
             var periods = await _dbContext.Periods
                 .Where(p => p.UserId == userId)
-                .Select(p => new PeriodDto(p.PeriodId, p.UserId, p.StartDate, p.EndDate, p.IsActive))
+                .Select(p => new PeriodDto(p.PeriodId, p.UserId, p.StartDate, p.EndDate, p.IsActive,p.IsPredicted))
                 .ToListAsync(ct);
 
             return Ok( periods);
@@ -54,7 +55,8 @@ namespace CycleApp.Controllers
                             p.UserId,
                             p.StartDate,
                             p.EndDate,
-                            p.IsActive
+                            p.IsActive,
+                            p.IsPredicted
                         ))
                         .ToListAsync(ct);
 

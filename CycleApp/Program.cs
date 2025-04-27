@@ -146,6 +146,7 @@ builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<ICodeStorageService, CodeStorageService>();
 builder.Services.AddScoped<ICycleCalculatorService, CycleCalculatorService>();
+builder.Services.AddHostedService<CycleCalculationBackgroundService>();
 
 // Аутентификация JWT
 var jwtKey = builder.Configuration["Jwt:Key"] ??
