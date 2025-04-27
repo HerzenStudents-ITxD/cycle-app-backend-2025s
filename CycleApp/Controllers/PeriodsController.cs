@@ -31,10 +31,10 @@ namespace CycleApp.Controllers
 
         [HttpGet]
         public async Task<IActionResult> GetByUser(Guid userId, CancellationToken ct)
-        {
+        {   
             var periods = await _dbContext.Periods
                 .Where(p => p.UserId == userId)
-                .Select(p => new PeriodDto(p.PeriodId, p.UserId, p.StartDate, p.EndDate, p.IsActive,p.IsPredicted))
+                .Select(p => new PeriodDto(p.PeriodId, p.UserId, p.StartDate, p.EndDate ?? DateTime.UtcNow, p.IsActive,p.IsPredicted))
                 .ToListAsync(ct);
 
             return Ok( periods);
@@ -46,6 +46,7 @@ namespace CycleApp.Controllers
         [FromQuery] Guid user_id,
         CancellationToken ct)
             {
+
                 try
                 {
                     var periods = await _dbContext.Periods
@@ -54,7 +55,7 @@ namespace CycleApp.Controllers
                             p.PeriodId,
                             p.UserId,
                             p.StartDate,
-                            p.EndDate,
+                            p.EndDate ?? DateTime.UtcNow,
                             p.IsActive,
                             p.IsPredicted
                         ))
