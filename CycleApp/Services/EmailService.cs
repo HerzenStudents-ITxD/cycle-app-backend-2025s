@@ -1,4 +1,5 @@
-﻿using MimeKit;
+﻿using Microsoft.Extensions.Caching.Memory;
+using MimeKit;
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using Microsoft.Extensions.Configuration;
@@ -6,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Threading.Tasks;
 using CycleApp.Services.Interfaces;
+using System.Net.Sockets;
 
 namespace CycleApp.Services
 {
@@ -13,11 +15,16 @@ namespace CycleApp.Services
     {
         private readonly IConfiguration _configuration;
         private readonly ILogger<EmailService> _logger;
+        private readonly ICodeStorageService _codeStorage;
 
-        public EmailService(IConfiguration configuration, ILogger<EmailService> logger)
+        public EmailService(
+            IConfiguration configuration,
+            ILogger<EmailService> logger,
+            ICodeStorageService codeStorage)
         {
             _configuration = configuration;
             _logger = logger;
+            _codeStorage = codeStorage;
         }
 
         public async Task SendEmailAsync(string to, string subject, string body)
@@ -42,7 +49,15 @@ namespace CycleApp.Services
                 smtp.ServerCertificateValidationCallback = (s, c, h, e) => true; // For testing purposes only
 
                 _logger.LogInformation("Connecting to SMTP server {Server}:{Port}", smtpServer, smtpPort);
-                await smtp.ConnectAsync(smtpServer, smtpPort, SecureSocketOptions.StartTls);
+                try
+                {
+                    await smtp.ConnectAsync(smtpServer, smtpPort, SecureSocketOptions.StartTls);
+                }
+                catch (SocketException ex)
+                {
+                    _logger.LogError(ex, "Could not resolve SMTP host {Server}", smtpServer);
+                    throw new InvalidOperationException($"SMTP host '{smtpServer}' could not be resolved. Check your Email:SmtpServer setting.", ex);
+                }
 
                 _logger.LogInformation("Authenticating as {User}", smtpUser);
                 await smtp.AuthenticateAsync(smtpUser, smtpPass);
@@ -62,23 +77,25 @@ namespace CycleApp.Services
             }
         }
 
-        public async Task SendVerificationCodeByEmail(string toEmail, string code)
+        public async Task SendVerificationCodeAsync(string toEmail)
         {
+            var code = new Random().Next(100000, 999999).ToString();
+            _codeStorage.StoreCode(toEmail, code, TimeSpan.FromMinutes(5));
+
             var subject = "Your Verification Code";
             var body = $@"
                 <p>Hello,</p>
                 <p>Your verification code is: <strong>{code}</strong></p>
                 <p>Please enter this code to verify your email address.</p>";
 
-            _logger.LogInformation("Preparing to send verification code to {Email}", toEmail);
+            _logger.LogInformation("Sending verification code to {Email}", toEmail);
             await SendEmailAsync(toEmail, subject, body);
         }
 
-        public async Task<bool> ValidateCodeAsync(string email, string code)
+        public Task<bool> ValidateCodeAsync(string email, string code)
         {
-            // Placeholder implementation
-            // Replace with actual validation logic
-            return code == "123456"; // Example validation
+            var isValid = _codeStorage.ValidateCode(email, code);
+            return Task.FromResult(isValid);
         }
     }
 }

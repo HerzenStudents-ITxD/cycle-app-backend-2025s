@@ -11,7 +11,7 @@
         public int DayOfCycle { get; set; }
         public bool IsPredicted { get; set; } = false;
 
-        public User User { get; set; }
+        public User? User { get; set; }
 
         public Period() { }
 

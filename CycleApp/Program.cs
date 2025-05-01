@@ -25,6 +25,7 @@ builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<ICodeStorageService, CodeStorageService>();
 builder.Services.AddScoped<ICycleCalculatorService, CycleCalculatorService>();
 builder.Services.AddHostedService<CycleCalculationBackgroundService>();
+builder.Services.AddMemoryCache();
 
 // Аутентификация JWT
 var jwtKey = builder.Configuration["Jwt:Key"] ??
@@ -92,7 +93,7 @@ app.MapControllers();
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<CycleDbContext>();
-    dbContext.Database.EnsureCreated();
+    dbContext.Database.Migrate();
 }
 
 app.Run();
