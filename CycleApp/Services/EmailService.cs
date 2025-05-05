@@ -31,23 +31,56 @@ namespace CycleApp.Services
         {
             try
             {
-                var fromAddress = _configuration["Email:FromAddress"] ?? throw new ArgumentNullException("Email:FromAddress is not configured");
-                var smtpServer = _configuration["Email:SmtpServer"] ?? throw new ArgumentNullException("Email:SmtpServer is not configured");
-                var smtpPort = int.Parse(_configuration["Email:SmtpPort"] ?? throw new ArgumentNullException("Email:SmtpPort is not configured"));
-                var smtpUser = _configuration["Email:SmtpUser"] ?? throw new ArgumentNullException("Email:SmtpUser is not configured");
-                var smtpPass = _configuration["Email:SmtpPass"] ?? throw new ArgumentNullException("Email:SmtpPass is not configured");
-
+                // Проверка и получение настроек электронной почты
+                var fromAddress = _configuration["Email:FromAddress"];
+                if (string.IsNullOrEmpty(fromAddress))
+                {
+                    _logger.LogError("Email:FromAddress is not configured");
+                    throw new ArgumentNullException("Email:FromAddress is not configured");
+                }
+        
+                var smtpServer = _configuration["Email:SmtpServer"];
+                if (string.IsNullOrEmpty(smtpServer))
+                {
+                    _logger.LogError("Email:SmtpServer is not configured");
+                    throw new ArgumentNullException("Email:SmtpServer is not configured");
+                }
+        
+                var smtpPortStr = _configuration["Email:SmtpPort"];
+                if (string.IsNullOrEmpty(smtpPortStr) || !int.TryParse(smtpPortStr, out int smtpPort))
+                {
+                    _logger.LogError("Email:SmtpPort is not configured or not a valid number");
+                    throw new ArgumentNullException("Email:SmtpPort is not configured or not a valid number");
+                }
+        
+                var smtpUser = _configuration["Email:SmtpUser"];
+                if (string.IsNullOrEmpty(smtpUser))
+                {
+                    _logger.LogError("Email:SmtpUser is not configured");
+                    throw new ArgumentNullException("Email:SmtpUser is not configured");
+                }
+        
+                var smtpPass = _configuration["Email:SmtpPass"];
+                if (string.IsNullOrEmpty(smtpPass))
+                {
+                    _logger.LogError("Email:SmtpPass is not configured");
+                    throw new ArgumentNullException("Email:SmtpPass is not configured");
+                }
+        
+                // Создание сообщения
                 var email = new MimeMessage();
                 email.From.Add(new MailboxAddress("CycleApp", fromAddress));
                 email.To.Add(MailboxAddress.Parse(to));
                 email.Subject = subject;
-
+        
                 var builder = new BodyBuilder { HtmlBody = body };
                 email.Body = builder.ToMessageBody();
-
+        
+                // Отправка сообщения
                 using var smtp = new SmtpClient();
                 smtp.ServerCertificateValidationCallback = (s, c, h, e) => true; // For testing purposes only
-
+                smtp.Timeout = 30000; // Увеличиваем таймаут до 30 секунд
+        
                 _logger.LogInformation("Connecting to SMTP server {Server}:{Port}", smtpServer, smtpPort);
                 try
                 {
@@ -58,22 +91,43 @@ namespace CycleApp.Services
                     _logger.LogError(ex, "Could not resolve SMTP host {Server}", smtpServer);
                     throw new InvalidOperationException($"SMTP host '{smtpServer}' could not be resolved. Check your Email:SmtpServer setting.", ex);
                 }
-
-                _logger.LogInformation("Authenticating as {User}", smtpUser);
-                await smtp.AuthenticateAsync(smtpUser, smtpPass);
-
-                _logger.LogInformation("Sending email to {Recipient}", to);
-                await smtp.SendAsync(email);
-
-                _logger.LogInformation("Disconnecting from SMTP server");
-                await smtp.DisconnectAsync(true);
-
-                _logger.LogInformation("Email sent successfully to {Recipient}", to);
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to connect to SMTP server {Server}:{Port}", smtpServer, smtpPort);
+                    throw new InvalidOperationException($"Failed to connect to SMTP server: {ex.Message}", ex);
+                }
+        
+                try
+                {
+                    _logger.LogInformation("Authenticating as {User}", smtpUser);
+                    await smtp.AuthenticateAsync(smtpUser, smtpPass);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Authentication failed for user {User}", smtpUser);
+                    throw new InvalidOperationException($"SMTP authentication failed. Check your Email:SmtpUser and Email:SmtpPass settings.", ex);
+                }
+        
+                try
+                {
+                    _logger.LogInformation("Sending email to {Recipient}", to);
+                    await smtp.SendAsync(email);
+                    
+                    _logger.LogInformation("Disconnecting from SMTP server");
+                    await smtp.DisconnectAsync(true);
+                    
+                    _logger.LogInformation("Email sent successfully to {Recipient}", to);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to send email to {Recipient}", to);
+                    throw new InvalidOperationException($"Failed to send email: {ex.Message}", ex);
+                }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error sending email to {Recipient}", to);
-                throw;
+                throw; // Перепрокидываем исключение для обработки на уровне выше
             }
         }
 

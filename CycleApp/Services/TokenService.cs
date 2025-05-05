@@ -3,6 +3,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using CycleApp.Models;
+using CycleApp.Services.Interfaces;
 using Microsoft.IdentityModel.Tokens;
 
 namespace CycleApp.Services
@@ -38,7 +39,7 @@ namespace CycleApp.Services
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
-        public string GenerateTempToken(string email)
+        public string GenerateToken(string email)
         {
             var claims = new[]
             {
@@ -59,7 +60,7 @@ namespace CycleApp.Services
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
-        public bool ValidateTempToken(string token, string email)
+        public bool ValidateToken(string token)
         {
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
             var tokenHandler = new JwtSecurityTokenHandler();
@@ -77,14 +78,27 @@ namespace CycleApp.Services
                     IssuerSigningKey = key
                 }, out SecurityToken validatedToken);
 
-                var jwtToken = (JwtSecurityToken)validatedToken;
-                var emailClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Email);
-
-                return emailClaim != null && emailClaim.Value == email;
+                return true;
             }
             catch
             {
                 return false;
+            }
+        }
+
+        // Add method to extract email from token
+        public string GetEmailFromToken(string token)
+        {
+            try
+            {
+                var tokenHandler = new JwtSecurityTokenHandler();
+                var jwtToken = tokenHandler.ReadJwtToken(token);
+                var emailClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Email);
+                return emailClaim?.Value;
+            }
+            catch
+            {
+                return null;
             }
         }
     }

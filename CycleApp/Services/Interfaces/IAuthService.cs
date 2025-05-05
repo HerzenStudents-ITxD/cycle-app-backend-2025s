@@ -6,5 +6,6 @@ namespace CycleApp.Services
     {
         Task<bool> ValidateUserAsync(string email, string code);
         Task<AuthResponse> RegisterUserAsync(RegisterRequest request);
+        Task<AuthResponse> LoginUserAsync(string email);
     }
 }
