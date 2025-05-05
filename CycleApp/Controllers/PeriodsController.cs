@@ -3,10 +3,12 @@ using Microsoft.EntityFrameworkCore;
 using CycleApp.Contracts;
 using CycleApp.DataAccess;
 using CycleApp.Models;
+using Microsoft.AspNetCore.Authorization;
 using System.Linq;
 
 namespace CycleApp.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("[controller]")]
     public class PeriodsController : ControllerBase

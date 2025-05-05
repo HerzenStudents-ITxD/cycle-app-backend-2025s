@@ -3,22 +3,36 @@ using CycleApp.Middleware;
 using CycleApp.Services;
 using CycleApp.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
+using Swashbuckle.AspNetCore.Filters;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Конфигурация сервисов
+// Service configuration
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.AddSecurityDefinition("oauth2", new OpenApiSecurityScheme
+    {
+        Description = "Standard Authorization header using the Bearer scheme (\"bearer {token}\")",
+        In = ParameterLocation.Header,
+        Name = "Authorization",
+        Type = SecuritySchemeType.ApiKey
+    });
+    
+    options.OperationFilter<SecurityRequirementsOperationFilter>();
+});
 
-// База данных
+// Database
 builder.Services.AddDbContext<CycleDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("Database")));
 
-// Регистрация сервисов
+// Services registration
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
@@ -27,13 +41,20 @@ builder.Services.AddScoped<ICycleCalculatorService, CycleCalculatorService>();
 builder.Services.AddHostedService<CycleCalculationBackgroundService>();
 builder.Services.AddMemoryCache();
 
-// Аутентификация JWT
+// JWT Authentication
 var jwtKey = builder.Configuration["Jwt:Key"] ??
-    throw new InvalidOperationException("JWT Key is not configured");
+             throw new InvalidOperationException("JWT Key is not configured");
 var jwtIssuer = builder.Configuration["Jwt:Issuer"] ??
-    throw new InvalidOperationException("JWT Issuer is not configured");
+                throw new InvalidOperationException("JWT Issuer is not configured");
 var jwtAudience = builder.Configuration["Jwt:Audience"] ??
-    throw new InvalidOperationException("JWT Audience is not configured");
+                  throw new InvalidOperationException("JWT Audience is not configured");
+
+builder.Services.AddAuthorization(options =>
+{
+    options.FallbackPolicy = new AuthorizationPolicyBuilder()
+        .RequireAuthenticatedUser()
+        .Build();
+});
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -59,13 +80,13 @@ builder.Services.AddCors(options =>
         if (origins.Length > 0)
         {
             policyBuilder.WithOrigins(origins)
-                       .AllowAnyHeader()
-                       .AllowAnyMethod();
+                .AllowAnyHeader()
+                .AllowAnyMethod();
         }
     });
 });
 
-// Логирование
+// Logging
 builder.Services.AddLogging(config =>
 {
     config.ClearProviders();
@@ -89,7 +110,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
-// Инициализация БД
+// Database initialization
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<CycleDbContext>();

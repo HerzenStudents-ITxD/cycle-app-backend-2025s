@@ -1,9 +1,11 @@
 using Microsoft.AspNetCore.Mvc;
 using CycleApp.Services.Interfaces;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 
 namespace CycleApp.Controllers
 {
+    [AllowAnonymous]
     [ApiController]
     [Route("api/[controller]")]
     public class EmailVerificationController : ControllerBase

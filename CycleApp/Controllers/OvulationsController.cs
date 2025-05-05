@@ -5,9 +5,11 @@ using CycleApp.Models;
 using CycleApp.Contracts;
 using System;
 using System.Threading;
+using Microsoft.AspNetCore.Authorization;
 
 namespace CycleApp.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("api/[controller]")]
     public class OvulationsController : ControllerBase

@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using CycleApp.Services.Interfaces;
-using Microsoft.Extensions.Logging;
 
 namespace CycleApp.Services
 {
@@ -25,7 +23,8 @@ namespace CycleApp.Services
                 Expiration = DateTime.UtcNow.Add(expiration),
                 IsUsed = false
             };
-            _logger.LogInformation($"Код сохранён: {code} для {email} (действителен до {_codes[lowerEmail].Expiration})");
+            _logger.LogInformation(
+                $"Код сохранён: {code} для {email} (действителен до {_codes[lowerEmail].Expiration})");
         }
 
         public bool ValidateCode(string email, string code)
