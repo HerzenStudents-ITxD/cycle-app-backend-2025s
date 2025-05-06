@@ -2,9 +2,6 @@
 using Microsoft.EntityFrameworkCore;
 using CycleApp.Contracts;
 using CycleApp.DataAccess;
-using CycleApp.Models;
-using CycleApp.Controllers;
-using System.Threading;
 using Microsoft.AspNetCore.Authorization;
 
 namespace CycleApp.Controllers

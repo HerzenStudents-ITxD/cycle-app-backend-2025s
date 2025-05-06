@@ -54,35 +54,30 @@ builder.Services.AddScoped<ICycleCalculatorService, CycleCalculatorService>();
 builder.Services.AddHostedService<CycleCalculationBackgroundService>();
 builder.Services.AddMemoryCache();
 
-// JWT Authentication
-var jwtKey = builder.Configuration["Jwt:Key"] ??
-             throw new InvalidOperationException("JWT Key is not configured");
-var jwtIssuer = builder.Configuration["Jwt:Issuer"] ??
-                throw new InvalidOperationException("JWT Issuer is not configured");
-var jwtAudience = builder.Configuration["Jwt:Audience"] ??
-                  throw new InvalidOperationException("JWT Audience is not configured");
 
-builder.Services.AddAuthorization(options =>
-{
-    options.FallbackPolicy = new AuthorizationPolicyBuilder()
-        .RequireAuthenticatedUser()
-        .Build();
-});
-
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
+builder.Services.AddAuthentication(options =>
     {
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    })
+    .AddJwtBearer(options =>
+    {  options.SaveToken = true;
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+        
             ValidateAudience = true,
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+        
             ValidateLifetime = true,
+        
             ValidateIssuerSigningKey = true,
-            ValidIssuer = jwtIssuer,
-            ValidAudience = jwtAudience,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
         };
     });
+builder.Services.AddAuthorization();
 
 // CORS
 builder.Services.AddCors(options =>
@@ -117,12 +112,13 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+app.UseRouting();
+
 app.UseCors("AllowSpecificOrigins");
 app.UseAuthentication();
 app.UseAuthorization();
-app.MapControllers();
 
+app.MapControllers();
 // Database initialization
 using (var scope = app.Services.CreateScope())
 {
