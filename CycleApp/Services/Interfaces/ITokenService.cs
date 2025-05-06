@@ -7,6 +7,7 @@ namespace CycleApp.Services.Interfaces
         string GenerateToken(User user);
         string GenerateToken(string email);
         bool ValidateToken(string token);
+        int GetUserIdFromToken(string token);
         string GetEmailFromToken(string token);
     }
 }
