@@ -15,7 +15,12 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddMemoryCache();
-builder.Services.AddLogging(config => config.AddConsole());
+builder.Services.AddLogging(config => 
+{
+    config.AddConsole();
+    config.AddDebug();
+    config.SetMinimumLevel(LogLevel.Information);
+});
 
 // Register application services
 builder.Services.AddScoped<IAuthService, AuthService>()
@@ -90,10 +95,28 @@ builder.Services.AddAuthentication(options =>
                     context.Response.Headers.Add("Token-Expired", "true");
                 }
                 var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<JwtBearerEvents>>();
+                
+                var authHeader = context.Request.Headers.Authorization.ToString();
+                var tokenInfo = !string.IsNullOrEmpty(authHeader) && authHeader.Length > 15 ? 
+                    $"Token starts with: {authHeader.Substring(7, 15)}..." : 
+                    "No token provided";
+                
                 logger.LogWarning(
-                    "Authentication failed: {ExceptionType} - {ExceptionMessage}", 
+                    "Authentication failed JWT for {Path}: {ExceptionType} - {ExceptionMessage}. {TokenInfo}", 
+                    context.Request.Path,
                     context.Exception.GetType().Name, 
-                    context.Exception.Message);
+                    context.Exception.Message,
+                    tokenInfo);
+                
+                // Add additional details for token validation failures
+                if (context.Exception is SecurityTokenValidationException)
+                {
+                    logger.LogWarning("Token validation details: Request method: {Method}, Query: {Query}, IP: {IP}", 
+                        context.Request.Method,
+                        context.Request.QueryString.Value,
+                        context.Request.HttpContext.Connection.RemoteIpAddress);
+                }
+                
                 return Task.CompletedTask;
             },
             OnMessageReceived = context =>
@@ -112,7 +135,7 @@ builder.Services.AddAuthentication(options =>
                 {
                     var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<JwtBearerEvents>>();
                     logger.LogWarning(
-                        "Authorization failed 401: User attempted to access {Path} with method {Method}. " +
+                        "JWT  Authorization failed 401: User attempted to access {Path} with method {Method}. " +
                         "Request IP: {IP}, User-Agent: {UserAgent}, Authorization Header Present: {AuthHeaderPresent}",
                         context.Request.Path,
                         context.Request.Method,
@@ -120,6 +143,16 @@ builder.Services.AddAuthentication(options =>
                         context.Request.Headers.UserAgent.ToString(),
                         !string.IsNullOrEmpty(context.Request.Headers.Authorization.ToString()));
                 }
+                return Task.CompletedTask;
+            },
+            OnTokenValidated = context =>
+            {
+                var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<JwtBearerEvents>>();
+                var username = context.Principal?.Identity?.Name ?? "unknown";
+                logger.LogInformation(
+                    "JWT Token validated successfully for user {Username} at {Timestamp}", 
+                    username, 
+                    DateTime.UtcNow);
                 return Task.CompletedTask;
             }
         };

@@ -11,6 +11,7 @@ namespace CycleApp.Controllers
 {
 
     [ApiController]
+    [Authorize]
     [Route("api/[controller]")]
     public class OvulationsController : ControllerBase
     {
