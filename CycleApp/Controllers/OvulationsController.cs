@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace CycleApp.Controllers
 {
-    [Authorize]
+
     [ApiController]
     [Route("api/[controller]")]
     public class OvulationsController : ControllerBase
