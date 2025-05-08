@@ -212,7 +212,29 @@ app.MapControllers();
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<CycleDbContext>();
-    dbContext.Database.Migrate();
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+    
+    try
+    {
+        // Drop the database if it exists
+        logger.LogInformation("Dropping database...");
+        await dbContext.Database.EnsureDeletedAsync();
+        
+        // Create the database and schema
+        logger.LogInformation("Creating database and schema...");
+        await dbContext.Database.EnsureCreatedAsync();
+        
+        // Seed test data
+        logger.LogInformation("Seeding test data...");
+        await DatabaseSeeder.SeedTestData(dbContext);
+        
+        logger.LogInformation("Database initialization completed successfully.");
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "An error occurred while initializing the database.");
+        throw;
+    }
 }
 
 app.Run();
