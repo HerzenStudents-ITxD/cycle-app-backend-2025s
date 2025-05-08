@@ -9,29 +9,25 @@ namespace CycleApp.Controllers
     [Authorize]
     [ApiController]
     [Route("api/[controller]")]
-    public class UsersController : ControllerBase
+    public class UsersController : BaseController
     {
         private readonly CycleDbContext _dbContext;
 
         public UsersController(CycleDbContext dbContext)
+            : base(dbContext)
         {
             _dbContext = dbContext;
         }
 
         // GET: Получить данные пользователя по ID
-        [HttpGet("{userId}")]
-        public async Task<IActionResult> GetUserById(Guid userId, CancellationToken ct)
+        [HttpGet]
+        public async Task<IActionResult> GetUserById(CancellationToken ct)
         {
             try
             {
-                var user = await _dbContext.Users
-                    .FirstOrDefaultAsync(u => u.UserId == userId, ct);
-
+                var user = await GetUserFromClaimsAsync(ct);
                 if (user == null)
-                {
-                    return NotFound(new { error = "User not found" });
-                }
-
+                    return NotFound("User not found");
                 var userDto = new UserDto(
                     user.UserId,
                     user.Email,
@@ -50,18 +46,15 @@ namespace CycleApp.Controllers
         }
 
         // PUT: Обновить данные пользователя
-        [HttpPut("{userId}")]
-        public async Task<IActionResult> UpdateUser(Guid userId, [FromBody] UpdateUserRequest request, CancellationToken ct)
+        [HttpPut]
+        public async Task<IActionResult> UpdateUser([FromBody] UpdateUserRequest request,
+            CancellationToken ct)
         {
             try
             {
-                var user = await _dbContext.Users
-                    .FirstOrDefaultAsync(u => u.UserId == userId, ct);
-
+                var user = await GetUserFromClaimsAsync(ct);
                 if (user == null)
-                {
-                    return NotFound(new { error = "User not found" });
-                }
+                    return NotFound("User not found");
 
                 // Обновляем поля пользователя
                 user.CycleLength = request.cycleLength ?? user.CycleLength;

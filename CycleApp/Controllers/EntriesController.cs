@@ -14,20 +14,17 @@ namespace CycleApp.Controllers
     [Authorize]
     [ApiController]
     [Route("api/[controller]")]
-    public class EntriesController : ControllerBase
+    public class EntriesController : BaseController
     {
         private readonly CycleDbContext _dbContext;
-        private readonly ILogger<EntriesController> _logger;
 
-        public EntriesController(
-            CycleDbContext dbContext,
-            ILogger<EntriesController> logger)
+        public EntriesController(CycleDbContext dbContext)
+            : base(dbContext)
         {
             _dbContext = dbContext;
-            _logger = logger;
         }
 
-        // POST: Создание новой записи (уже реализовано в вашем коде)
+        // POST: Создание новой записи
         [HttpPost]
         public async Task<IActionResult> CreateEntry(
             [FromBody] CreateEntryRequest request,
@@ -35,16 +32,13 @@ namespace CycleApp.Controllers
         {
             try
             {
-                // Проверка существования пользователя
-                var userExists = await _dbContext.Users.AnyAsync(u => u.UserId == request.user_id, ct);
-                if (!userExists)
-                {
-                    return BadRequest(new { error = "User not found" });
-                }
+                var user = await GetUserFromClaimsAsync(ct);
+                if (user == null)
+                    return NotFound("User not found");
 
                 var entry = new Entry
                 {
-                    UserId = request.user_id,
+                    UserId = user.UserId,
                     Date = request.date ?? DateTime.UtcNow,
                     PeriodStarted = request.periodStarted,
                     PeriodEnded = request.periodEnded,
@@ -68,12 +62,10 @@ namespace CycleApp.Controllers
             }
             catch (DbUpdateException dbEx)
             {
-                _logger.LogError(dbEx, "Database error while creating entry");
                 return StatusCode(500, new { error = "Database error" });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Unexpected error creating entry");
                 return StatusCode(500, new { error = "Internal server error" });
             }
         }
@@ -110,7 +102,6 @@ namespace CycleApp.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error retrieving entry by ID");
                 return StatusCode(500, new { error = "Internal server error" });
             }
         }
@@ -119,15 +110,19 @@ namespace CycleApp.Controllers
         [HttpPut("{entryId}")]
         public async Task<IActionResult> UpdateEntry(Guid entryId, [FromBody] UpdateEntryRequest request, CancellationToken ct)
         {
+            var user = await GetUserFromClaimsAsync(ct);
+            if (user == null)
+                return NotFound("User not found");
             try
             {
                 var entry = await _dbContext.Entries
-                    .FirstOrDefaultAsync(e => e.EntryId == entryId, ct);
+                    .FirstOrDefaultAsync(e => e.EntryId == entryId
+                                              && e.UserId    == user.UserId,
+                        ct);
 
                 if (entry == null)
-                {
                     return NotFound(new { error = "Entry not found" });
-                }
+                
 
                 // Обновляем поля записи
                 entry.Date = request.date ?? entry.Date;
@@ -147,12 +142,10 @@ namespace CycleApp.Controllers
             }
             catch (DbUpdateException dbEx)
             {
-                _logger.LogError(dbEx, "Database error while updating entry");
                 return StatusCode(500, new { error = "Database error" });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error updating entry");
                 return StatusCode(500, new { error = "Internal server error" });
             }
         }
@@ -161,15 +154,19 @@ namespace CycleApp.Controllers
         [HttpDelete("{entryId}")]
         public async Task<IActionResult> DeleteEntry(Guid entryId, CancellationToken ct)
         {
+            var user = await GetUserFromClaimsAsync(ct);
+            if (user == null)
+                return NotFound("User not found");
             try
             {
                 var entry = await _dbContext.Entries
-                    .FirstOrDefaultAsync(e => e.EntryId == entryId, ct);
+                    .FirstOrDefaultAsync(e => e.EntryId == entryId
+                                              && e.UserId    == user.UserId,
+                        ct);
 
                 if (entry == null)
-                {
                     return NotFound(new { error = "Entry not found" });
-                }
+
 
                 _dbContext.Entries.Remove(entry);
                 await _dbContext.SaveChangesAsync(ct);
@@ -178,29 +175,29 @@ namespace CycleApp.Controllers
             }
             catch (DbUpdateException dbEx)
             {
-                _logger.LogError(dbEx, "Database error while deleting entry");
                 return StatusCode(500, new { error = "Database error" });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error deleting entry");
                 return StatusCode(500, new { error = "Internal server error" });
             }
         }
         [HttpGet("by-date-range")]
         public async Task<IActionResult> GetEntriesByDateRange(
-        [FromQuery] DateTime start_date,
-        [FromQuery] DateTime end_date,
-        [FromQuery] Guid user_id,
+        [FromQuery] DateTime startDate,
+        [FromQuery] DateTime endDate,
         CancellationToken ct)
             {
+                var user = await GetUserFromClaimsAsync(ct);
+                if (user == null)
+                    return NotFound("User not found");
                 try
                 {
                     var entries = await _dbContext.Entries
-                        .Where(e => e.UserId == user_id && e.Date >= start_date && e.Date <= end_date)
+                        .Where(e => e.UserId == user.UserId && e.Date >= startDate && e.Date <= endDate)
                         .Select(e => new EntryDto(
                             e.EntryId,
-                            e.UserId,
+                            user.UserId,
                             e.Date,
                             e.PeriodStarted ?? false,
                             e.PeriodEnded ?? false,

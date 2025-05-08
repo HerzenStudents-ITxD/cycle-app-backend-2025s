@@ -181,9 +181,4 @@ namespace CycleApp.Controllers
             return Ok(new AuthResponse(userToken, false, email, user.UserId));
         }
     }
-
-    public class LoginRequest
-    {
-        public string Email { get; set; }
-    }
 }
