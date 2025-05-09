@@ -9,6 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using System.Linq;
+using CycleApp.Services;
 
 namespace CycleApp.Controllers
 {
@@ -19,12 +20,17 @@ namespace CycleApp.Controllers
     {
         private readonly CycleDbContext _dbContext;
         private readonly ILogger<EntriesController> _logger;
+        private readonly ICycleCalculatorService _calculator;
 
-        public EntriesController(CycleDbContext dbContext, ILogger<EntriesController> logger)
+        public EntriesController(
+            CycleDbContext dbContext, 
+            ILogger<EntriesController> logger,
+            ICycleCalculatorService calculator)
             : base(dbContext, logger)
         {
             _dbContext = dbContext;
             _logger = logger;
+            _calculator = calculator;
         }
 
         // POST: Создание новой записи
@@ -86,6 +92,27 @@ namespace CycleApp.Controllers
                     activePeriod.EndDate = entry.Date;
                     activePeriod.IsActive = false;
                     entry.PeriodId = activePeriod.PeriodId;
+
+                    // Update cycle variations
+                    _calculator.UpdateCycleVariations(user);
+
+                    // Calculate and add new ovulation prediction
+                    var (ovulationStart, ovulationEnd) = _calculator.CalculateNextOvulation(user, entry.Date);
+                    
+                    // Remove old predicted ovulations
+                    var oldOvulationPredictions = await DbContext.Ovulations
+                        .Where(o => o.UserId == user.UserId && o.IsPredicted)
+                        .ToListAsync();
+                    DbContext.Ovulations.RemoveRange(oldOvulationPredictions);
+
+                    // Add new ovulation prediction
+                    await DbContext.Ovulations.AddAsync(new Ovulation
+                    {
+                        UserId = user.UserId,
+                        StartDate = ovulationStart,
+                        EndDate = ovulationEnd,
+                        IsPredicted = true
+                    });
                 }
             }
             else
