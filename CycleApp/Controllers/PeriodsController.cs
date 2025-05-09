@@ -96,53 +96,53 @@ namespace CycleApp.Controllers
             return Ok();
         }
 
-        [HttpGet]
-        public async Task<IActionResult> GetByUser(CancellationToken ct)
-        {
-            var user = await GetUserFromClaimsAsync(ct);
-            if (user == null)
-                return NotFound("User not found");
-            var periods = await _dbContext.Periods
-                .Where(p => p.UserId == user.UserId)
-                .OrderBy(p => p.StartDate)
-                .Select(p => new PeriodDto(p.PeriodId, user.UserId, p.StartDate, p.EndDate ?? DateTime.UtcNow, p.IsActive,
-                    p.IsPredicted))
-                .ToListAsync(ct);
-
-            return Ok(periods);
-        }
-
-        [HttpGet("by-date-range")]
-        public async Task<IActionResult> GetPeriodsByDateRange(
-            [FromQuery] DateTime startDate,
-            [FromQuery] DateTime endDate,
-            CancellationToken ct)
-        {
-            var user = await GetUserFromClaimsAsync(ct);
-            if (user == null)
-                return NotFound("User not found");
-            try
-            {
-                var periods = await _dbContext.Periods
-                    .Where(p => p.UserId == user.UserId && p.StartDate >= startDate && p.EndDate <= endDate)
-                    .OrderBy(p => p.StartDate)
-                    .Select(p => new PeriodDto(
-                        p.PeriodId,
-                        user.UserId,
-                        p.StartDate,
-                        p.EndDate ?? DateTime.UtcNow,
-                        p.IsActive,
-                        p.IsPredicted
-                    ))
-                    .ToListAsync(ct);
-
-                return Ok(periods);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { error = "Internal server error", details = ex.Message });
-            }
-        }
+        // [HttpGet]
+        // public async Task<IActionResult> GetByUser(CancellationToken ct)
+        // {
+        //     var user = await GetUserFromClaimsAsync(ct);
+        //     if (user == null)
+        //         return NotFound("User not found");
+        //     var periods = await _dbContext.Periods
+        //         .Where(p => p.UserId == user.UserId)
+        //         .OrderBy(p => p.StartDate)
+        //         .Select(p => new PeriodDto(p.PeriodId, user.UserId, p.StartDate, p.EndDate ?? DateTime.UtcNow, p.IsActive,
+        //             p.IsPredicted))
+        //         .ToListAsync(ct);
+        //
+        //     return Ok(periods);
+        // }
+        //
+        // [HttpGet("by-date-range")]
+        // public async Task<IActionResult> GetPeriodsByDateRange(
+        //     [FromQuery] DateTime startDate,
+        //     [FromQuery] DateTime endDate,
+        //     CancellationToken ct)
+        // {
+        //     var user = await GetUserFromClaimsAsync(ct);
+        //     if (user == null)
+        //         return NotFound("User not found");
+        //     try
+        //     {
+        //         var periods = await _dbContext.Periods
+        //             .Where(p => p.UserId == user.UserId && p.StartDate >= startDate && p.EndDate <= endDate)
+        //             .OrderBy(p => p.StartDate)
+        //             .Select(p => new PeriodDto(
+        //                 p.PeriodId,
+        //                 user.UserId,
+        //                 p.StartDate,
+        //                 p.EndDate ?? DateTime.UtcNow,
+        //                 p.IsActive,
+        //                 p.IsPredicted
+        //             ))
+        //             .ToListAsync(ct);
+        //
+        //         return Ok(periods);
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         return StatusCode(500, new { error = "Internal server error", details = ex.Message });
+        //     }
+        // }
 
         [HttpGet("table")]
         public async Task<IActionResult> GetPeriodTable([FromQuery] DateTime? startDate, [FromQuery] DateTime? endDate)

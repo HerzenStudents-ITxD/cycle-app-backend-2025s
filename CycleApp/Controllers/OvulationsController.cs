@@ -53,32 +53,32 @@ namespace CycleApp.Controllers
                 return StatusCode(500, new { error = "Internal server error", details = ex.Message });
             }
         }
-
-        // POST: Рассчитать дни овуляции
-        [HttpPost("calculate")]
-        public async Task<IActionResult> CalculateOvulation([FromBody] CalculateOvulationRequest request,
-            CancellationToken ct)
-        {
-            try
-            {
-                var user = await GetUserFromClaimsAsync(ct);
-                if (user == null)
-                    return NotFound("User not found");
-                
-
-                // Пример расчета: овуляция обычно происходит за 14 дней до конца цикла
-                var ovulationDate = request.StartDate.AddDays(user.CycleLength - 14);
-
-                return Ok(new
-                {
-                    success = true,
-                    ovulationDate = ovulationDate.ToString("yyyy-MM-dd")
-                });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { error = "Internal server error", details = ex.Message });
-            }
-        }
+        //
+        // // POST: Рассчитать дни овуляции
+        // [HttpPost("calculate")]
+        // public async Task<IActionResult> CalculateOvulation([FromBody] CalculateOvulationRequest request,
+        //     CancellationToken ct)
+        // {
+        //     try
+        //     {
+        //         var user = await GetUserFromClaimsAsync(ct);
+        //         if (user == null)
+        //             return NotFound("User not found");
+        //         
+        //
+        //         // Пример расчета: овуляция обычно происходит за 14 дней до конца цикла
+        //         var ovulationDate = request.StartDate.AddDays(user.CycleLength - 14);
+        //
+        //         return Ok(new
+        //         {
+        //             success = true,
+        //             ovulationDate = ovulationDate.ToString("yyyy-MM-dd")
+        //         });
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         return StatusCode(500, new { error = "Internal server error", details = ex.Message });
+        //     }
+        // }
     }
 }
