@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace CycleApp.Models
 {
@@ -29,8 +30,13 @@ namespace CycleApp.Models
         // Timezone information
         public string? TimeZoneId { get; set; }
         
+        [JsonIgnore]
         public List<Period> Periods { get; set; }
+        
+        [JsonIgnore]
         public List<Ovulation> Ovulations { get; set; }
+        
+        [JsonIgnore]
         public List<Entry> Entries { get; set; }
 
         public User()

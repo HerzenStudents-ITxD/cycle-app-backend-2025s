@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace CycleApp.Models
 {
@@ -27,8 +28,10 @@ namespace CycleApp.Models
         public int DayOfCycle { get; set; }
         
         [ForeignKey("UserId")]
-        public User User { get; set; }
+        [JsonIgnore]
+        public virtual User User { get; set; }
         
+        [JsonIgnore]
         public List<Entry> Entries { get; set; } = new List<Entry>();
 
         public int? DayBeforePeriod { get; set; }

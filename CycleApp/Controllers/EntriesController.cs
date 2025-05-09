@@ -51,16 +51,29 @@ namespace CycleApp.Controllers
             // If period started, create a new period
             if (request.PeriodStarted)
             {
-                var period = new Period
+                // Check if there's already an active period
+                var existingActivePeriod = await DbContext.Periods
+                    .FirstOrDefaultAsync(p => p.UserId == user.UserId && p.IsActive);
+                
+                if (existingActivePeriod != null)
                 {
-                    UserId = user.UserId,
-                    StartDate = entry.Date,
-                    IsActive = true,
-                    DayOfCycle = 1
-                };
-                DbContext.Periods.Add(period);
-                await DbContext.SaveChangesAsync();
-                entry.PeriodId = period.PeriodId;
+                    // If there's an active period, use it instead of creating a new one
+                    entry.PeriodId = existingActivePeriod.PeriodId;
+                }
+                else
+                {
+                    // Only create a new period if there isn't an active one
+                    var period = new Period
+                    {
+                        UserId = user.UserId,
+                        StartDate = entry.Date,
+                        IsActive = true,
+                        DayOfCycle = 1
+                    };
+                    DbContext.Periods.Add(period);
+                    await DbContext.SaveChangesAsync();
+                    entry.PeriodId = period.PeriodId;
+                }
             }
             // If period ended, find the active period and update it
             else if (request.PeriodEnded)
@@ -72,6 +85,17 @@ namespace CycleApp.Controllers
                 {
                     activePeriod.EndDate = entry.Date;
                     activePeriod.IsActive = false;
+                    entry.PeriodId = activePeriod.PeriodId;
+                }
+            }
+            else
+            {
+                // If neither PeriodStarted nor PeriodEnded is true, associate with active period if it exists
+                var activePeriod = await DbContext.Periods
+                    .FirstOrDefaultAsync(p => p.UserId == user.UserId && p.IsActive);
+                
+                if (activePeriod != null)
+                {
                     entry.PeriodId = activePeriod.PeriodId;
                 }
             }

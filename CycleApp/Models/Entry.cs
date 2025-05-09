@@ -43,6 +43,7 @@
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace CycleApp.Models
 {
@@ -54,6 +55,7 @@ namespace CycleApp.Models
         [Required]
         public Guid UserId { get; set; }
 
+        [JsonIgnore]
         public virtual User? User { get; set; }
 
         [Required]
@@ -82,6 +84,8 @@ namespace CycleApp.Models
 
         // Reference to the period this entry belongs to
         public Guid? PeriodId { get; set; }
+        
+        [JsonIgnore]
         public virtual Period? Period { get; set; }
     }
 
@@ -92,6 +96,8 @@ namespace CycleApp.Models
         
         [Required]
         public int EntryId { get; set; }
+        
+        [JsonIgnore]
         public virtual Entry? Entry { get; set; }
 
         [Required]
