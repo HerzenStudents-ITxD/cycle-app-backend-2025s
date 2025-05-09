@@ -6,6 +6,7 @@ using CycleApp.Contracts;
 using System;
 using System.Threading;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.Extensions.Logging;
 
 namespace CycleApp.Controllers
 {
@@ -16,8 +17,8 @@ namespace CycleApp.Controllers
     {
         private readonly CycleDbContext _dbContext;
 
-        public OvulationsController(CycleDbContext dbContext)
-            : base(dbContext)
+        public OvulationsController(CycleDbContext dbContext, ILogger<OvulationsController> logger)
+            : base(dbContext, logger)
         {
             _dbContext = dbContext;
         }

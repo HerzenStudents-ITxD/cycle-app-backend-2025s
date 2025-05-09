@@ -1,17 +1,37 @@
-﻿namespace CycleApp.Models
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace CycleApp.Models
 {
     public class Period
     {
+        [Key]
         public Guid PeriodId { get; set; }
+        
+        [Required]
         public Guid UserId { get; set; }
+        
+        [Required]
         public DateTime StartDate { get; set; }
+        
         public DateTime? EndDate { get; set; }
+        
+        [Required]
         public bool IsActive { get; set; }
-        public int? DayBeforePeriod { get; set; }
+        
+        [Required]
+        public bool IsPredicted { get; set; }
+        
         public int DayOfCycle { get; set; }
-        public bool IsPredicted { get; set; } = false;
+        
+        [ForeignKey("UserId")]
+        public User User { get; set; }
+        
+        public List<Entry> Entries { get; set; } = new List<Entry>();
 
-        public User? User { get; set; }
+        public int? DayBeforePeriod { get; set; }
 
         public Period() { }
 

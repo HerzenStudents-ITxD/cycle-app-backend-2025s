@@ -1,17 +1,25 @@
-﻿using System;
+﻿using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace CycleApp.Contracts
 {
     public class UpdateEntryRequest
     {
-        public DateTime? date { get; set; }
-        public bool? periodStarted { get; set; }
-        public bool? periodEnded { get; set; }
-        public string note { get; set; }
-        public string heaviness { get; set; }
-        public string symptoms { get; set; }
-        public string sex { get; set; }
-        public string mood { get; set; }
-        public string discharges { get; set; }
+        [StringLength(500)]
+        public string? Note { get; set; }
+        
+        [StringLength(20)]
+        public string? Heaviness { get; set; }
+        
+        public List<SymptomRequest>? Symptoms { get; set; }
+        
+        [StringLength(20)]
+        public string? Sex { get; set; }
+        
+        [StringLength(50)]
+        public string? Mood { get; set; }
+        
+        [StringLength(100)]
+        public string? Discharges { get; set; }
     }
 }

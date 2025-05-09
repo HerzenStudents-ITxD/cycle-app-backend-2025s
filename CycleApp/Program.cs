@@ -28,6 +28,7 @@ builder.Services.AddScoped<IAuthService, AuthService>()
                 .AddScoped<ITokenService, TokenService>()
                 .AddScoped<ICodeStorageService, CodeStorageService>()
                 .AddScoped<ICycleCalculatorService, CycleCalculatorService>()
+                .AddScoped<IPeriodTableService, PeriodTableService>()
                 .AddHostedService<CycleCalculationBackgroundService>();
 
 // Add database context
@@ -216,17 +217,16 @@ using (var scope = app.Services.CreateScope())
     
     try
     {
-        // Drop the database if it exists
-        logger.LogInformation("Dropping database...");
-        await dbContext.Database.EnsureDeletedAsync();
-        
-        // Create the database and schema
-        logger.LogInformation("Creating database and schema...");
+        // Create the database if it doesn't exist
+        logger.LogInformation("Ensuring database exists...");
         await dbContext.Database.EnsureCreatedAsync();
         
-        // Seed test data
-        logger.LogInformation("Seeding test data...");
-        await DatabaseSeeder.SeedTestData(dbContext);
+        // Seed test data only if the database is empty
+        if (!await dbContext.Users.AnyAsync())
+        {
+            logger.LogInformation("Seeding test data...");
+            await DatabaseSeeder.SeedTestData(dbContext);
+        }
         
         logger.LogInformation("Database initialization completed successfully.");
     }

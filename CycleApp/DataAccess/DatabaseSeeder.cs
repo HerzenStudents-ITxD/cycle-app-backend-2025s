@@ -76,7 +76,15 @@ namespace CycleApp.DataAccess
                     Date = lastPeriod.StartDate.AddDays(2),
                     PeriodStarted = true,
                     Heaviness = "Medium",
-                    Symptoms = "Cramps, Fatigue",
+                    Symptoms = new List<EntrySymptom>
+                    {
+                        new EntrySymptom
+                        {
+                            Name = "None",
+                            Intensity = "None",
+                            Notes = "No symptoms"
+                        }
+                    },
                     Mood = "Tired"
                 });
 
@@ -86,7 +94,15 @@ namespace CycleApp.DataAccess
                     Date = lastPeriod.StartDate.AddDays(5),
                     PeriodEnded = true,
                     Heaviness = "Light",
-                    Symptoms = "None",
+                    Symptoms = new List<EntrySymptom>
+                    {
+                        new EntrySymptom
+                        {
+                            Name = "None",
+                            Intensity = "None",
+                            Notes = "No symptoms"
+                        }
+                    },
                     Mood = "Good"
                 });
             }

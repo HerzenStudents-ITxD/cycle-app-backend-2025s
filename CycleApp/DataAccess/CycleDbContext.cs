@@ -13,6 +13,7 @@ namespace CycleApp.DataAccess
         public DbSet<Period> Periods { get; set; }
         public DbSet<Ovulation> Ovulations { get; set; }
         public DbSet<Entry> Entries { get; set; }
+        public DbSet<EntrySymptom> EntrySymptoms { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -47,7 +48,7 @@ namespace CycleApp.DataAccess
                 entity.HasMany(u => u.Entries)
                     .WithOne(e => e.User)
                     .HasForeignKey(e => e.UserId)
-                    .OnDelete(DeleteBehavior.Cascade);
+                    .OnDelete(DeleteBehavior.NoAction);
             });
 
             modelBuilder.Entity<Period>(entity =>
@@ -64,6 +65,11 @@ namespace CycleApp.DataAccess
 
                 entity.Property(p => p.DayOfCycle)
                     .IsRequired();
+
+                entity.HasMany(p => p.Entries)
+                    .WithOne(e => e.Period)
+                    .HasForeignKey(e => e.PeriodId)
+                    .OnDelete(DeleteBehavior.SetNull);
             });
 
             modelBuilder.Entity<Ovulation>(entity =>
@@ -95,10 +101,7 @@ namespace CycleApp.DataAccess
                     .IsRequired(false);
 
                 entity.Property(e => e.Heaviness)
-                    .IsRequired(false);
-
-                entity.Property(e => e.Symptoms)
-                    .HasMaxLength(200)
+                    .HasMaxLength(20)
                     .IsRequired(false);
 
                 entity.Property(e => e.Sex)
@@ -111,6 +114,29 @@ namespace CycleApp.DataAccess
 
                 entity.Property(e => e.Discharges)
                     .HasMaxLength(100)
+                    .IsRequired(false);
+
+                entity.HasMany(e => e.Symptoms)
+                    .WithOne(s => s.Entry)
+                    .HasForeignKey(s => s.EntryId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<EntrySymptom>(entity =>
+            {
+                entity.Property(s => s.EntrySymptomId)
+                    .UseIdentityColumn();
+
+                entity.Property(s => s.Name)
+                    .IsRequired()
+                    .HasMaxLength(50);
+
+                entity.Property(s => s.Intensity)
+                    .HasMaxLength(20)
+                    .IsRequired(false);
+
+                entity.Property(s => s.Notes)
+                    .HasMaxLength(200)
                     .IsRequired(false);
             });
         }

@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using CycleApp.Contracts;
 using CycleApp.DataAccess;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.Extensions.Logging;
 
 namespace CycleApp.Controllers
 {
@@ -13,8 +14,8 @@ namespace CycleApp.Controllers
     {
         private readonly CycleDbContext _dbContext;
 
-        public UsersController(CycleDbContext dbContext)
-            : base(dbContext)
+        public UsersController(CycleDbContext dbContext, ILogger<UsersController> logger)
+            : base(dbContext, logger)
         {
             _dbContext = dbContext;
         }

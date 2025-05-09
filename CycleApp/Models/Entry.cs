@@ -42,17 +42,19 @@
 //}
 using System;
 using System.ComponentModel.DataAnnotations;
+using System.Collections.Generic;
 
 namespace CycleApp.Models
 {
     public class Entry
     {
-        public Guid EntryId { get; set; } = Guid.NewGuid();
+        [Key]
+        public int EntryId { get; set; }
 
         [Required]
         public Guid UserId { get; set; }
 
-        public virtual User? User { get; set; }  // Добавлен nullable
+        public virtual User? User { get; set; }
 
         [Required]
         public DateTime Date { get; set; } = DateTime.UtcNow;
@@ -61,21 +63,45 @@ namespace CycleApp.Models
         public bool? PeriodEnded { get; set; }
 
         [StringLength(500)]
-        public string? Note { get; set; } = null;  // Nullable + значение по умолчанию
+        public string? Note { get; set; }
 
         [StringLength(20)]
-        public string? Heaviness { get; set; } = null;
+        public string? Heaviness { get; set; }
+
+        // List of symptoms for this entry
+        public List<EntrySymptom> Symptoms { get; set; } = new List<EntrySymptom>();
+
+        [StringLength(20)]
+        public string? Sex { get; set; }
+
+        [StringLength(20)]
+        public string? Mood { get; set; }
+
+        [StringLength(20)]
+        public string? Discharges { get; set; }
+
+        // Reference to the period this entry belongs to
+        public Guid? PeriodId { get; set; }
+        public virtual Period? Period { get; set; }
+    }
+
+    public class EntrySymptom
+    {
+        [Key]
+        public int EntrySymptomId { get; set; }
+        
+        [Required]
+        public int EntryId { get; set; }
+        public virtual Entry? Entry { get; set; }
+
+        [Required]
+        [StringLength(50)]
+        public string Name { get; set; }
+
+        [StringLength(20)]
+        public string? Intensity { get; set; } // e.g., "Mild", "Moderate", "Severe"
 
         [StringLength(200)]
-        public string? Symptoms { get; set; } = null;
-
-        [StringLength(20)]
-        public string? Sex { get; set; } = null;
-
-        [StringLength(20)]
-        public string? Mood { get; set; } = null;
-
-        [StringLength(20)]
-        public string? Discharges { get; set; } = null;
+        public string? Notes { get; set; }
     }
 }

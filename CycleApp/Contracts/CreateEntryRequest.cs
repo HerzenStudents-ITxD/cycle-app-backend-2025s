@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
 namespace CycleApp.Contracts
@@ -8,27 +9,39 @@ namespace CycleApp.Contracts
         [Required]
         public Guid user_id { get; set; }
 
-        public DateTime? date { get; set; }
+        public DateTime? Date { get; set; }
 
-        public bool? periodStarted { get; set; }
-        public bool? periodEnded { get; set; }
+        public bool PeriodStarted { get; set; }
+        public bool PeriodEnded { get; set; }
 
         [StringLength(500)]
-        public string note { get; set; }
+        public string? Note { get; set; }
 
         [StringLength(20)]
-        public string heaviness { get; set; }
+        public string? Heaviness { get; set; }
 
+        public List<SymptomRequest>? Symptoms { get; set; }
+
+        [StringLength(20)]
+        public string? Sex { get; set; }
+
+        [StringLength(50)]
+        public string? Mood { get; set; }
+
+        [StringLength(100)]
+        public string? Discharges { get; set; }
+    }
+
+    public class SymptomRequest
+    {
+        [Required]
+        [StringLength(50)]
+        public string Name { get; set; }
+        
+        [StringLength(20)]
+        public string? Intensity { get; set; }
+        
         [StringLength(200)]
-        public string symptoms { get; set; }
-
-        [StringLength(20)]
-        public string sex { get; set; }
-
-        [StringLength(20)]
-        public string mood { get; set; }
-
-        [StringLength(20)]
-        public string discharges { get; set; }
+        public string? Notes { get; set; }
     }
 }
